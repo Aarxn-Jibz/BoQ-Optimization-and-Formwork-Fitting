@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { fetchHistory } from "../services/api";
+import React, { useState } from "react";
 
 const C = { cyan:"#00D4FF",green:"#3FB950",red:"#F85149",amber:"#D29922",
   void:"#0D1117",surface:"#161B22",border:"#21262D",text:"#E6EDF3",muted:"#7D8590",abyss:"#080B12" };
@@ -44,15 +43,9 @@ function HistoryRow({ run, idx, onRunClick, onRerun }) {
   );
 }
 
-export default function HistoryPage({ onRunClick, onRerun, push }) {
-  const [runs, setRuns]     = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchHistory()
-      .then(d => { setRuns(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+export default function HistoryPage({ onRunClick, onRerun, push, history = [] }) {
+  const runs = history;
+  const loading = false;
 
   const totalSaved = runs
     .filter(r => r.status === "completed" && r.saving !== "—")

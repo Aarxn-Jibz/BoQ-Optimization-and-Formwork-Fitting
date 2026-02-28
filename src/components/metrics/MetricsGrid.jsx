@@ -2,121 +2,119 @@ import React from "react";
 import MetricCard from "./MetricCard";
 import { COLORS } from "../../constants/tokens";
 
-/*
-  These 4 cards now show FORMWORK KPIs — not server metrics.
-  They read from `metrics` (live) AND `optimizationResult` (last run).
-  When no run has happened yet, cards show yard baseline data.
-*/
+// ── Compute yard stats from LIVE inventory prop ───────────────
+function getYardStats(inventoryData) {
+  if (!inventoryData || inventoryData.length === 0) {
+    return { totalKits: 0, deployedKits: 0, available: 0, utilization: 0 };
+  }
+  const totalKits    = inventoryData.reduce((s, i) => s + i.total,    0);
+  const deployedKits = inventoryData.reduce((s, i) => s + i.deployed, 0);
+  const utilization  = totalKits > 0 ? Math.round((deployedKits / totalKits) * 100) : 0;
+  return { totalKits, deployedKits, available: totalKits - deployedKits, utilization };
+}
 
-export default function MetricsGrid({ metrics, spark, onCardClick, optimizationResult }) {
+export default function MetricsGrid({ optimizationResult, inventoryData, spark, onCardClick }) {
+  const yard      = getYardStats(inventoryData);
+  const hasResult = !!optimizationResult;
+  const hasInv    = inventoryData && inventoryData.length > 0;
 
-  // ── Card 1: Kit Utilization (avg reuse rate) ──────────────────
-  const reuseRate = optimizationResult
-    ? optimizationResult.total_repetition_factor
-    : 0;
-  const reuseMax  = 10; // max designed reuse cycles
-  const reusePct  = Math.min(100, (reuseRate / reuseMax) * 100);
-  const reuseSev  = reuseRate >= 5 ? "ok" : reuseRate >= 2 ? "warn" : "crit";
-  const reuseBadge = reuseRate >= 5 ? "▲ EXCELLENT" : reuseRate >= 2 ? "▲ MODERATE" : "▼ LOW";
-  const reuseBadgeVar = reuseRate >= 5 ? "up" : reuseRate >= 2 ? "warn" : "down";
+  // ── Card 1: Kit Reuse Rate ────────────────────────────────
+  const reuseVal    = hasResult ? `×${optimizationResult.total_repetition_factor.toFixed(1)}` : "—";
+  const reusePct    = hasResult ? Math.min(100, optimizationResult.total_repetition_factor * 10) : 0;
+  const reuseSev    = hasResult
+    ? (optimizationResult.total_repetition_factor >= 3 ? "ok" : optimizationResult.total_repetition_factor >= 1.5 ? "warn" : "crit")
+    : "ok";
+  const reuseBadge  = hasResult ? (reuseSev === "ok" ? "▲ EXCELLENT" : reuseSev === "warn" ? "▲ FAIR" : "▼ LOW") : "NO RUN YET";
+  const reuseBadgeV = hasResult ? (reuseSev === "ok" ? "up" : reuseSev === "warn" ? "warn" : "down") : "gray";
 
-  // ── Card 2: Cost Savings % ─────────────────────────────────────
-  const savings    = optimizationResult ? optimizationResult.estimated_cost_savings_percent : 0;
-  const savingsSev = savings >= 30 ? "ok" : savings >= 15 ? "warn" : "crit";
-  const savingsBadgeVar = savings >= 30 ? "up" : savings >= 15 ? "warn" : "down";
+  // ── Card 2: Cost Savings ──────────────────────────────────
+  const savingsPct    = hasResult ? optimizationResult.estimated_cost_savings_percent : 0;
+  const savingsVal    = hasResult ? `${savingsPct.toFixed(1)}%` : "—";
+  const savingsSev    = hasResult ? (savingsPct >= 40 ? "ok" : savingsPct >= 20 ? "warn" : "crit") : "ok";
+  const savingsBadge  = hasResult ? (savingsSev === "ok" ? "▲ HIGH IMPACT" : "▲ MODERATE") : "AWAITING RUN";
+  const savingsBadgeV = hasResult ? (savingsSev === "ok" ? "up" : "warn") : "gray";
 
-  // ── Card 3: Kits in Yard (from inventory) ─────────────────────
-  const deployed  = metrics.deployed  ?? 33;   // total deployed kit sets
-  const available = metrics.available ?? 25;   // available in yard
-  const totalKits = deployed + available;
-  const yardUtil  = totalKits > 0 ? Math.round((deployed / totalKits) * 100) : 0;
-  const yardSev   = yardUtil >= 90 ? "crit" : yardUtil >= 70 ? "warn" : "ok";
+  // ── Card 3: Yard Utilization ──────────────────────────────
+  const yardSev    = yard.utilization >= 90 ? "crit" : yard.utilization >= 70 ? "warn" : "ok";
+  const yardBadge  = !hasInv ? "NO DATA" : yard.utilization >= 90 ? "⚠ CRITICAL" : "▲ LIVE";
+  const yardBadgeV = !hasInv ? "gray" : yard.utilization >= 90 ? "down" : yard.utilization >= 70 ? "warn" : "up";
+  const yardBarV   = yard.utilization >= 90 ? "crit" : yard.utilization >= 70 ? "warn" : "cyan";
 
-  // ── Card 4: Active Elements (from last run) ────────────────────
-  const activeElements = optimizationResult
-    ? optimizationResult.kit_details?.reduce((s, k) => s + k.used_in_elements.length, 0) ?? 0
-    : 0;
-  const totalUnits = optimizationResult ? optimizationResult.original_boq_items : 0;
+  // ── Card 4: Elements Tracked ──────────────────────────────
+  const elemCount = hasResult ? optimizationResult.original_boq_items : 0;
+  const kitsCount = hasResult ? optimizationResult.optimized_kits_required : 0;
 
   return (
     <div className="metric-grid slide-up">
 
-      {/* Card 1 — Kit Reuse Rate */}
+      {/* KIT REUSE RATE */}
       <MetricCard
         label="KIT REUSE RATE"
-        value={optimizationResult ? `×${reuseRate}` : "—"}
-        badge={optimizationResult ? reuseBadge : "NO RUN YET"}
-        badgeVariant={optimizationResult ? reuseBadgeVar : "warn"}
-        desc={optimizationResult ? `of ${reuseMax} max cycles` : "Run optimizer to see"}
+        value={reuseVal}
+        badge={reuseBadge}
+        badgeVariant={reuseBadgeV}
+        desc={hasResult
+          ? `${optimizationResult.original_boq_items} units → ${optimizationResult.optimized_kits_required} kits`
+          : "Run optimizer to see"}
         barPct={reusePct}
         barVariant={reuseSev === "ok" ? "cyan" : reuseSev === "warn" ? "warn" : "crit"}
-        severity={optimizationResult ? reuseSev : "warn"}
-        valueColor={
-          !optimizationResult ? COLORS.muted :
-          reuseSev === "ok"   ? COLORS.green :
-          reuseSev === "warn" ? COLORS.amber : COLORS.red
-        }
+        severity={hasResult ? reuseSev : "ok"}
+        valueColor={hasResult
+          ? (reuseSev === "ok" ? COLORS.cyan : reuseSev === "warn" ? COLORS.amber : COLORS.red)
+          : COLORS.muted}
         onClick={() => onCardClick?.("reuse")}
       />
 
-      {/* Card 2 — Cost Savings */}
+      {/* COST SAVINGS */}
       <MetricCard
         label="COST SAVINGS EST."
-        value={optimizationResult ? `${savings}%` : "—"}
-        badge={optimizationResult
-          ? (savings >= 30 ? "▲ HIGH IMPACT" : savings >= 15 ? "▲ MODERATE" : "▼ LOW")
-          : "AWAITING RUN"
-        }
-        badgeVariant={optimizationResult ? savingsBadgeVar : "warn"}
-        desc={optimizationResult
-          ? `${optimizationResult.original_boq_items - optimizationResult.optimized_kits_required} fewer units`
-          : "Run optimizer to see"
-        }
-        barPct={savings}
-        barVariant={savingsSev === "ok" ? "cyan" : savingsSev === "warn" ? "warn" : "crit"}
-        severity={optimizationResult ? savingsSev : "warn"}
-        valueColor={
-          !optimizationResult ? COLORS.muted :
-          savings >= 30 ? COLORS.green :
-          savings >= 15 ? COLORS.cyan : COLORS.amber
-        }
+        value={savingsVal}
+        badge={savingsBadge}
+        badgeVariant={savingsBadgeV}
+        desc={hasResult
+          ? `₹${Math.round(savingsPct * 850).toLocaleString("en-IN")}K saved`
+          : "Run optimizer to see"}
+        barPct={savingsPct}
+        barVariant={savingsSev === "ok" ? "cyan" : "warn"}
+        severity={hasResult ? savingsSev : "ok"}
+        valueColor={hasResult ? (savingsSev === "ok" ? COLORS.green : COLORS.amber) : COLORS.muted}
         onClick={() => onCardClick?.("savings")}
       />
 
-      {/* Card 3 — Yard Utilization (live from inventory) */}
+      {/* YARD UTILIZATION */}
       <MetricCard
         label="YARD UTILIZATION"
-        value={`${yardUtil}%`}
-        badge="▲ LIVE"
-        badgeVariant="up"
-        desc={`${deployed} deployed · ${available} available`}
-        spark={spark}
-        sparkColor={
-          yardSev === "crit" ? COLORS.red :
-          yardSev === "warn" ? COLORS.amber : COLORS.cyan
-        }
-        severity={yardSev}
-        valueColor={
-          yardSev === "crit" ? COLORS.red :
-          yardSev === "warn" ? COLORS.amber : COLORS.text
-        }
+        value={hasInv ? `${yard.utilization}%` : "—"}
+        badge={yardBadge}
+        badgeVariant={yardBadgeV}
+        desc={hasInv
+          ? `${yard.deployedKits} deployed · ${yard.available} available`
+          : "Run optimizer to see"}
+        barPct={yard.utilization}
+        barVariant={yardBarV}
+        severity={hasInv ? yardSev : "ok"}
+        spark={hasInv ? spark : undefined}
+        sparkColor={COLORS.cyan}
+        valueColor={!hasInv ? COLORS.muted
+          : yard.utilization >= 90 ? COLORS.red
+          : yard.utilization >= 70 ? COLORS.amber
+          : COLORS.text}
         onClick={() => onCardClick?.("yard")}
       />
 
-      {/* Card 4 — Elements / Units Tracked */}
+      {/* ELEMENTS TRACKED */}
       <MetricCard
         label="ELEMENTS TRACKED"
-        value={optimizationResult ? activeElements : metrics.agents ?? "—"}
-        badge={optimizationResult ? "▲ OPTIMIZED" : "▲ LIVE"}
-        badgeVariant={optimizationResult ? "up" : "ok"}
-        desc={optimizationResult
-          ? `${totalUnits} total units · ${optimizationResult.kit_details?.length ?? 0} kit types`
-          : `${metrics.agents ?? 3} active zones`
-        }
-        barPct={optimizationResult ? Math.min(100, (activeElements / 20) * 100) : 40}
+        value={hasResult ? String(elemCount) : "—"}
+        badge={hasResult ? "▲ LIVE" : "NO RUN YET"}
+        badgeVariant={hasResult ? "up" : "gray"}
+        desc={hasResult
+          ? `${kitsCount} optimized kits · ${inventoryData?.length ?? 0} types`
+          : "Run optimizer to see"}
+        barPct={hasResult && elemCount > 0 ? Math.min(100, (kitsCount / elemCount) * 100) : 0}
         barVariant="cyan"
         severity="ok"
-        valueColor={COLORS.cyan}
+        valueColor={hasResult ? COLORS.cyan : COLORS.muted}
         onClick={() => onCardClick?.("elements")}
       />
 

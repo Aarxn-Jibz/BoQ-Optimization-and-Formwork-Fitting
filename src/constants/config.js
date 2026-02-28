@@ -7,9 +7,6 @@ export const NAV_ITEMS = [
   { id: "history",    label: "Run History",   icon: "History"         },
 ];
 
-export const TOP_NAV = ["dashboard", "optimizer", "inventory", "reports", "settings"];
-
-export const CHART_TABS = ["cpu", "mem", "rps"];
 export const ALERT_FILTERS = ["all", "err", "warn", "ok"];
 
 export const LOG_ENTRIES = [
@@ -22,9 +19,11 @@ export const LOG_ENTRIES = [
   ["WARN",  "Inventory count mismatch: KIT-002 +3 units",   "inventory"  ],
   ["INFO",  "KIT-001 reset and ready for Column-A2",        "yard-ops"   ],
   ["ERROR", "Schedule conflict detected: 2026-03-05",       "planner"    ],
-  ["DEBUG", "Repetition rate recalculated: 78.3%",          "ml-engine"  ],
+  ["INFO",  "Aluform Tower Column ×15 reuse achieved",      "ml-engine"  ],
   ["WARN",  "Cycle time exceeded by 4h on Slab-B1",         "monitor"    ],
   ["INFO",  "Quality check passed — KIT-001 batch 2",       "qc"         ],
+  ["INFO",  "Go engine processed 10,000 rows in 1.2ms",     "optimizer"  ],
+  ["INFO",  "Procurement order raised for KIT-006",         "procurement"],
 ];
 
 export const CMD_ITEMS = [
@@ -39,22 +38,13 @@ export const CMD_ITEMS = [
   { label: "Settings",              hint: "⌘,", icon: "Settings",        nav: "settings"  },
 ];
 
-export const INITIAL_ALERTS = [
-  { id:1, status:"err",  title:"Inventory Overrun",        sub:"KIT-002 exceeds yard capacity",   time:"2m ago",  ack:false },
-  { id:2, status:"warn", title:"BoQ Deviation +12%",       sub:"Slab-B1 quantity mismatch",       time:"15m ago", ack:false },
-  { id:3, status:"ok",   title:"KIT-001 Cycle Complete",   sub:"Column-A1 stripped successfully", time:"1h ago",  ack:true  },
-  { id:4, status:"warn", title:"Low Repetition Rate",      sub:"Foundation elements < 2 reuses",  time:"2h ago",  ack:false },
-  { id:5, status:"ok",   title:"Optimization Run Success", sub:"RUN-2026-001 completed",          time:"3h ago",  ack:true  },
-  { id:6, status:"err",  title:"Schedule Conflict",        sub:"KIT-003 overlap on 2026-03-05",   time:"4h ago",  ack:false },
-];
+export const INITIAL_ALERTS = []
 
 export const SERVICES_DATA = [
-  { service: "api-gateway",   rps: "14.2K", p99: "42ms",  err: "0.002%", status: "ok"   },
-  { service: "auth-service",  rps: "3.1K",  p99: "18ms",  err: "0.000%", status: "ok"   },
-  { service: "ml-engine",     rps: "890",   p99: "210ms", err: "0.41%",  status: "warn" },
-  { service: "go-optimizer",  rps: "240",   p99: "890ms", err: "1.20%",  status: "err"  },
-  { service: "cache-layer",   rps: "28.9K", p99: "2ms",   err: "0.000%", status: "ok"   },
-  { service: "scheduler",     rps: "120",   p99: "45ms",  err: "3.10%",  status: "err"  },
-  { service: "erp-connector", rps: "18",    p99: "4.2s",  err: "0.80%",  status: "warn" },
-  { service: "event-bus",     rps: "42.1K", p99: "5ms",   err: "0.000%", status: "ok"   },
+  { zone:"Zone-A · Columns", kit:"KIT-001", pours_done:8,  pours_left:2,  next_strip:"2026-03-05", status:"crit" },
+  { zone:"Zone-B · Slabs",   kit:"KIT-002", pours_done:5,  pours_left:5,  next_strip:"2026-03-08", status:"warn" },
+  { zone:"Zone-B · Beams",   kit:"KIT-003", pours_done:2,  pours_left:8,  next_strip:"2026-03-12", status:"ok"   },
+  { zone:"Zone-C · Walls",   kit:"KIT-004", pours_done:0,  pours_left:10, next_strip:"—",          status:"idle" },
+  { zone:"Zone-C · Columns", kit:"KIT-005", pours_done:6,  pours_left:4,  next_strip:"2026-03-06", status:"warn" },
+  { zone:"Zone-A · Slabs",   kit:"KIT-006", pours_done:3,  pours_left:7,  next_strip:"2026-03-15", status:"ok"   },
 ];

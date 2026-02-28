@@ -11,18 +11,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
-// --- Constants & Config ---
-// Material constraint: e.g., Plywood degrades after 10 pours, Aluform after 100.
-const StandardRepetitionLimit = 10.0 
-
-// --- Data Models (Aligned with Python ETL) ---
+const StandardRepetitionLimit = 10.0
 
 type BoQItem struct {
 	ElementID    string  `json:"element_id"`
-	Material     string  `json:"material"` // Added material
+	Material     string  `json:"material"`
 	Length       float64 `json:"length"`
 	Width        float64 `json:"width"`
-	AreaSqm      float64 `json:"area_sqm"` // Added area
+	AreaSqm      float64 `json:"area_sqm"`
 	Quantity     int     `json:"quantity"`
 	StartDate    string  `json:"start_date"`
 	EndDate      string  `json:"end_date"`
@@ -46,27 +42,24 @@ type OptimizationResponse struct {
 	OptimizedTotalKits int         `json:"optimized_kits_required"`
 	TotalRepetition    float64     `json:"total_repetition_factor"`
 	CostSavingsPercent float64     `json:"estimated_cost_savings_percent"`
-	ExecutionTimeMs    string      `json:"execution_time_ms"` // Show off Go's speed!
+	ExecutionTimeMs    string      `json:"execution_time_ms"`
 	KitDetails         []KitDetail `json:"kit_details"`
 }
 
-// --- High-Performance Concurrent Optimization Logic ---
-
 func optimizeFormwork(items []BoQItem) (OptimizationResponse, error) {
-	startTime := time.Now() // Start the performance timer
+	startTime := time.Now()
 	var response OptimizationResponse
 
 	if len(items) == 0 {
 		return response, nil
 	}
 
-	// 1. Establish "Project Day 0"
 	var projectStart time.Time
 	first := true
 	for _, item := range items {
 		t, err := time.Parse("2006-01-02", item.StartDate)
 		if err != nil {
-			return response, fmt.Errorf("invalid start_date format for %s", item.ElementID)
+			return response, fmt.Errorf("invalid start_date for %s", item.ElementID)
 		}
 		if first || t.Before(projectStart) {
 			projectStart = t
@@ -74,45 +67,39 @@ func optimizeFormwork(items []BoQItem) (OptimizationResponse, error) {
 		}
 	}
 
-	// 2. Group items by exact dimensions AND material
 	groupedByDims := make(map[string][]BoQItem)
 	for _, item := range items {
 		dimKey := fmt.Sprintf("%s|%.1fx%.1f", item.Material, item.Length, item.Width)
 		groupedByDims[dimKey] = append(groupedByDims[dimKey], item)
 	}
 
-	// Shared variables for the Goroutines
 	var totalOriginal int
 	var totalOptimized int
 	var wg sync.WaitGroup
-	var mu sync.Mutex // Mutex to prevent race conditions when appending results
+	var mu sync.Mutex
 
-	// 3. Process each group CONCURRENTLY using Goroutines
 	for dims, groupItems := range groupedByDims {
-		wg.Add(1) // Add a thread to the wait group
-
-		// Kick off the Goroutine
+		wg.Add(1)
 		go func(dimKey string, items []BoQItem) {
-			defer wg.Done() // Mark thread as done when finished
+			defer wg.Done()
 
 			var elements []string
 			groupOriginalQty := 0
 			dailyChanges := make(map[int]int)
-			materialType := items[0].Material // Extract material for lifespan logic
+			materialType := items[0].Material
 
 			for _, item := range items {
 				elements = append(elements, item.ElementID)
 				groupOriginalQty += item.Quantity
-				
+
 				startT, _ := time.Parse("2006-01-02", item.StartDate)
 				endT, _ := time.Parse("2006-01-02", item.EndDate)
-				
+
 				startDay := int(startT.Sub(projectStart).Hours() / 24)
 				endDay := int(endT.Sub(projectStart).Hours() / 24)
 
-				// Sweep-line logic
 				dailyChanges[startDay] += item.Quantity
-				dailyChanges[endDay+1] -= item.Quantity 
+				dailyChanges[endDay+1] -= item.Quantity
 			}
 
 			var days []int
@@ -121,7 +108,6 @@ func optimizeFormwork(items []BoQItem) (OptimizationResponse, error) {
 			}
 			sort.Ints(days)
 
-			// Calculate maximum concurrent formwork needed
 			currentActive := 0
 			maxConcurrentRequired := 0
 			for _, day := range days {
@@ -131,16 +117,14 @@ func optimizeFormwork(items []BoQItem) (OptimizationResponse, error) {
 				}
 			}
 
-			// 4. Material-Specific Degradation Constraints
 			limit := StandardRepetitionLimit
 			if materialType == "Aluform" {
-				limit = 100.0 // Aluform lasts much longer
+				limit = 100.0
 			} else if materialType == "Plywood" {
 				limit = 15.0
 			}
 
 			requiredBasedOnLifespan := int(math.Ceil(float64(groupOriginalQty) / limit))
-			
 			finalRequiredQty := maxConcurrentRequired
 			if requiredBasedOnLifespan > maxConcurrentRequired {
 				finalRequiredQty = requiredBasedOnLifespan
@@ -151,58 +135,74 @@ func optimizeFormwork(items []BoQItem) (OptimizationResponse, error) {
 				repetition = float64(groupOriginalQty) / float64(finalRequiredQty)
 			}
 
-			// --- CRITICAL SECTION: Lock the mutex before writing to shared response ---
+			// Clean display label: "Steel 2.4×1.2" instead of "Steel|2.4x1.2"
+			displayDims := fmt.Sprintf("%.1fx%.1f", items[0].Length, items[0].Width)
+
 			mu.Lock()
 			totalOriginal += groupOriginalQty
 			totalOptimized += finalRequiredQty
-
 			response.KitDetails = append(response.KitDetails, KitDetail{
-				Dimensions:      dimKey,
+				Dimensions:      displayDims,
 				Material:        materialType,
 				RequiredQty:     finalRequiredQty,
 				RepetitionCount: math.Round(repetition*100) / 100,
 				UsedInElements:  elements,
 			})
 			mu.Unlock()
-			// --- END CRITICAL SECTION ---
 
-		}(dims, groupItems) // Pass variables into the closure
+		}(dims, groupItems)
 	}
 
-	wg.Wait() // Wait for all concurrent threads to finish
+	wg.Wait()
 
-	// 5. Calculate overall metrics
 	response.OriginalTotalItems = totalOriginal
 	response.OptimizedTotalKits = totalOptimized
-	
+
 	if totalOptimized > 0 {
 		response.TotalRepetition = math.Round((float64(totalOriginal)/float64(totalOptimized))*100) / 100
 		response.CostSavingsPercent = math.Round(((float64(totalOriginal-totalOptimized)/float64(totalOriginal))*100)*100) / 100
 	}
 
-	// Record execution time
 	execTime := time.Since(startTime)
 	response.ExecutionTimeMs = fmt.Sprintf("%.3f ms", float64(execTime.Microseconds())/1000.0)
 
 	return response, nil
 }
 
-// --- Server Setup ---
-
 func main() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 50 * 1024 * 1024, // 50MB — handles large BoQ files
+	})
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*", 
+		AllowOrigins: "*",
 		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET, POST, OPTIONS",
 	}))
 
+	// ── Health check — powers the status dot in the React topbar ──
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status":  "ok",
+			"version": "1.0.0",
+			"engine":  "Kit-Optima Go Engine",
+			"mode":    "live",
+		})
+	})
+
+	// ── Main optimization endpoint ─────────────────────────────────
 	app.Post("/api/optimize-kitting", func(c *fiber.Ctx) error {
 		var req OptimizationRequest
-		
+
 		if err := c.BodyParser(&req); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Cannot parse JSON payload. Check your data formatting.",
+				"error": "Cannot parse JSON. Check your payload format.",
+			})
+		}
+
+		if len(req.Items) == 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "No items in request. Send {items: [...]}",
 			})
 		}
 
@@ -216,6 +216,10 @@ func main() {
 		return c.JSON(result)
 	})
 
-	fmt.Println("Kit-Optima Engine running on http://localhost:3000")
+	fmt.Println("╔══════════════════════════════════════════╗")
+	fmt.Println("║  Kit-Optima Go Engine — localhost:3000   ║")
+	fmt.Println("║  POST /api/optimize-kitting              ║")
+	fmt.Println("║  GET  /api/health                        ║")
+	fmt.Println("╚══════════════════════════════════════════╝")
 	app.Listen(":3000")
 }

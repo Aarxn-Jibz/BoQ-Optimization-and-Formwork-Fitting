@@ -1,58 +1,73 @@
 import React, { useState } from "react";
-import { FileText, Filter, Download } from "lucide-react";
-import { LiveIndicator } from "../ui/Primitives";
+import { Layers } from "lucide-react";
 import { COLORS } from "../../constants/tokens";
+import { SERVICES_DATA } from "../../constants/config";
 
-const LEVEL_FILTERS = ["ALL", "INFO", "WARN", "ERROR", "DEBUG"];
+const statusConfig = {
+  crit: { label: "CRITICAL",  cls: "badge-down" },
+  warn: { label: "WARNING",   cls: "badge-warn" },
+  ok:   { label: "ON TRACK",  cls: "badge-ok"   },
+  idle: { label: "IDLE",      cls: "badge-gray"  },
+};
 
-export default function LogStream({ logs, onLogClick }) {
-  const [filter, setFilter] = useState("ALL");
-  const filtered = filter === "ALL" ? logs : logs.filter((l) => l.level === filter);
+export default function ServicesTable({ onRowClick, onViewAll }) {
+  const [sort, setSort] = useState({ col: "zone", dir: 1 });
+
+  const handleSort = (col) =>
+    setSort(s => ({ col, dir: s.col === col ? -s.dir : 1 }));
+
+  const sorted = [...SERVICES_DATA].sort((a, b) =>
+    String(a[sort.col] ?? "").localeCompare(String(b[sort.col] ?? "")) * sort.dir
+  );
 
   return (
     <div className="panel" style={{ display: "flex", flexDirection: "column" }}>
       <div className="panel-header">
         <div className="panel-title">
-          <FileText size={12} color={COLORS.cyan} />
-          SYSTEM LOG STREAM
+          <Layers size={12} color={COLORS.cyan} />
+          ZONE DEPLOYMENT STATUS
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <LiveIndicator />
-          <select
-            style={{
-              background: COLORS.surface, border: `1px solid ${COLORS.border}`,
-              color: COLORS.muted, fontFamily: "'JetBrains Mono',monospace",
-              fontSize: 10, padding: "2px 6px", outline: "none", cursor: "pointer",
-            }}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            {LEVEL_FILTERS.map((f) => <option key={f}>{f}</option>)}
-          </select>
-          <button className="btn-ghost">
-            <Download size={11} />EXPORT
-          </button>
-        </div>
+        {onViewAll && (
+          <button className="btn-ghost" onClick={onViewAll}>VIEW ALL</button>
+        )}
       </div>
 
-      <div className="log-body" style={{ height: 200 }}>
-        {filtered.map((l, i) => (
-          <div
-            key={l.id}
-            className={`log-line ${l.isNew && i === 0 ? "is-new" : ""}`}
-            onClick={() => onLogClick(l)}
-          >
-            <span className="log-time">{l.time}</span>
-            <span className={`log-level lv-${l.level}`}>{l.level}</span>
-            <span className="log-msg">{l.msg}</span>
-            <span className="log-source">{l.src}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="log-footer">
-        Showing <span className="log-count" style={{ margin:"0 4px" }}>{filtered.length}</span> of 18,492 entries
-        <button className="btn-ghost" style={{ marginLeft: "auto" }}>← OLDER</button>
+      <div style={{ overflowX: "auto" }}>
+        <table className="data-table">
+          <thead>
+            <tr>
+              {[
+                { col: "zone",       label: "ZONE"       },
+                { col: "kit",        label: "KIT"        },
+                { col: "pours_done", label: "POURS DONE" },
+                { col: "pours_left", label: "POURS LEFT" },
+                { col: "next_strip", label: "NEXT STRIP" },
+                { col: "status",     label: "STATUS"     },
+              ].map(({ col, label }) => (
+                <th key={col} onClick={() => handleSort(col)}>
+                  {label}{sort.col === col ? (sort.dir === 1 ? " ↑" : " ↓") : ""}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((row, i) => {
+              const st         = statusConfig[row.status] ?? statusConfig.ok;
+              const doneColor  = row.pours_done >= 8 ? COLORS.red : row.pours_done >= 5 ? COLORS.amber : COLORS.text;
+              const leftColor  = row.pours_left <= 2 ? COLORS.red : row.pours_left <= 4 ? COLORS.amber : COLORS.green;
+              return (
+                <tr key={i} onClick={() => onRowClick?.(row)} style={{ cursor: "pointer" }}>
+                  <td style={{ color: COLORS.text, fontWeight: 500 }}>{row.zone}</td>
+                  <td className="mono" style={{ color: COLORS.cyan }}>{row.kit}</td>
+                  <td className="mono" style={{ color: doneColor, fontWeight: 700 }}>{row.pours_done}</td>
+                  <td className="mono" style={{ color: leftColor, fontWeight: 700 }}>{row.pours_left}</td>
+                  <td className="mono" style={{ color: COLORS.muted }}>{row.next_strip}</td>
+                  <td><span className={`badge ${st.cls}`}>{st.label}</span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );

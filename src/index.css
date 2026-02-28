@@ -809,3 +809,40 @@ body {
 
 /* Content padding increase for breathing room */
 .content { padding: 20px 24px !important; gap: 16px !important; }
+
+/* ════════════════════════════════════════════════════════════
+   UX POLISH — KitOptima v2
+   ════════════════════════════════════════════════════════════ */
+
+.metric-value { font-size: 30px !important; }
+.metric-label { font-size: 11px !important; letter-spacing: 0.1em !important; }
+
+.nav-item  { height: 42px !important; font-size: 13px !important; }
+.nav-label { font-size: 13px !important; }
+
+.data-table td { font-size: 13px !important; height: 42px !important; }
+.data-table th { font-size: 11px !important; padding: 10px 16px !important; }
+
+.alert-title { font-size: 14px !important; }
+.alert-sub   { font-size: 11px !important; }
+.alert-time  { font-size: 11px !important; }
+
+.content { padding: 20px 24px !important; gap: 16px !important; }
+
+.breadcrumb { height: 40px !important; }
+.bc-current { font-size: 12px !important; font-weight: 600 !important; }
+
+.topnav { display: none !important; }
+
+.fill-esg { background: linear-gradient(90deg, #22C55E, rgba(34,197,94,0.35)); }
+
+.badge-gray {
+  background: rgba(125,133,144,0.1);
+  color: #7D8590;
+  border: 1px solid rgba(125,133,144,0.2);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
