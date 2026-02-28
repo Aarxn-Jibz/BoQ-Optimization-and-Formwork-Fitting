@@ -4,12 +4,12 @@
 // ─────────────────────────────────────────────────────────────
 
 const MOCK_MODE = false          // ← true = use mock data, false = call Go
-const BASE      = 'http://localhost:3000'
-const TIMEOUT   = 30000
+const BASE = 'http://localhost:3000'
+const TIMEOUT = 30000
 
 const ENDPOINTS = {
   OPTIMIZE: '/api/optimize-kitting',
-  HEALTH:   '/api/health',
+  HEALTH: '/api/health',
 }
 
 async function apiFetch(endpoint, options = {}) {
@@ -45,19 +45,21 @@ export async function runOptimization(items) {
     items.forEach(item => {
       const mat = item.material || 'Steel'
       const key = `${mat}|${Number(item.length).toFixed(1)}x${Number(item.width).toFixed(1)}`
-      if (!groups[key]) groups[key] = { elements: [], qty: 0, material: mat,
-        length: item.length, width: item.width }
+      if (!groups[key]) groups[key] = {
+        elements: [], qty: 0, material: mat,
+        length: item.length, width: item.width
+      }
       groups[key].elements.push(item.element_id)
       groups[key].qty += Number(item.quantity)
     })
     const limits = { Aluform: 100, Plywood: 15, Steel: 10 }
     const kit_details = Object.entries(groups).map(([key, g]) => {
-      const limit  = limits[g.material] ?? 10
+      const limit = limits[g.material] ?? 10
       const reqQty = Math.max(1, Math.ceil(g.qty / limit))
       return {
-        dimensions:       `${Number(g.length).toFixed(1)}x${Number(g.width).toFixed(1)}`,
-        material:         g.material,
-        required_qty:     reqQty,
+        dimensions: `${Number(g.length).toFixed(1)}x${Number(g.width).toFixed(1)}`,
+        material: g.material,
+        required_qty: reqQty,
         repetition_count: Math.round((g.qty / reqQty) * 100) / 100,
         used_in_elements: g.elements,
       }
@@ -66,13 +68,13 @@ export async function runOptimization(items) {
     const savings = totalQty > 0
       ? Math.round(((totalQty - optimizedTotal) / totalQty) * 100 * 100) / 100 : 0
     return {
-      original_boq_items:             totalQty,
-      optimized_kits_required:        optimizedTotal,
-      total_repetition_factor:        Math.round((totalQty / optimizedTotal) * 100) / 100,
+      original_boq_items: totalQty,
+      optimized_kits_required: optimizedTotal,
+      total_repetition_factor: Math.round((totalQty / optimizedTotal) * 100) / 100,
       estimated_cost_savings_percent: savings,
-      execution_time_ms:              '0.84 ms (mock)',
+      execution_time_ms: '0.84 ms (mock)',
       kit_details,
-      _run_id:       `RUN-${Date.now()}`,
+      _run_id: `RUN-${Date.now()}`,
       _processed_at: new Date().toISOString(),
     }
   }

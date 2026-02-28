@@ -1,131 +1,37 @@
-# 🖤 Obsidian Core — System Dashboard
+# Kit-Optima Dashboard
 
-> "Engineered for those who look closer."
+## Introduction
+Kit-Optima is a web-based optimization dashboard designed to calculate and display the most efficient kitting requirements for construction formwork (BoQ). The application consists of a React frontend that visualizes kitting performance, ESG metrics, and timelines, and a high-performance Go backend engine that rapidly processes bulk input data to compute reuse factors, cost savings, and optimized kit counts.
 
-A dark, dense, premium engineering dashboard built with **React + Vite + Recharts**.
+## Technologies
+- React 18
+- Vite
+- Recharts
+- Lucide React
+- CSS Custom Properties
+- Go
+- Fiber (Go web framework)
 
----
+## Setup & Usage
 
-## 📁 Project Structure
+1. **Start the Go Backend Engine:**
+   Open a terminal and navigate to the backend directory:
+   ```bash
+   cd algorithm
+   go run .
+   ```
+   The backend will start running on `localhost:3000`.
 
-```
-obsidian-core/
-├── index.html
-├── vite.config.js
-├── package.json
-└── src/
-    ├── main.jsx                   # React entry point
-    ├── App.jsx                    # Root orchestrator — state, hooks, layout
-    │
-    ├── styles/
-    │   ├── tokens.css             # CSS design tokens (colors, spacing, etc.)
-    │   └── globals.css            # Reset, animations, utility classes
-    │
-    ├── data/
-    │   └── constants.js           # Nav items, seed data, live data generators
-    │
-    ├── hooks/
-    │   └── index.js               # useLiveMetrics, useLiveChart, useLiveLogs,
-    │                              #   useNotifications, useDrawer, useCommandPalette
-    │
-    └── components/
-        ├── layout/
-        │   ├── Topbar.jsx         # Logo, top nav, search, avatar
-        │   └── Sidebar.jsx        # Collapsible nav with status footer
-        │
-        ├── ui/
-        │   ├── index.jsx          # Badge, Button, Tooltip, StatusDot, MiniBar,
-        │   │                      #   Sparkline, LiveBadge, SearchInput, TopProgressBar
-        │   ├── Panel.jsx          # Panel, PanelHeader, PanelTitle, PanelActions
-        │   └── Overlays.jsx       # Drawer, CommandPalette, NotificationStack
-        │
-        ├── dashboard/
-        │   ├── MetricCards.jsx    # 4-col animated metric cards
-        │   └── DataPanels.jsx     # LogStream, AlertsPanel, ServiceTable
-        │
-        └── charts/
-            └── LiveChart.jsx      # LiveChart (area) + VolumeChart (bar)
-```
+2. **Start the React Frontend:**
+   Open a separate terminal and navigate to the project root:
+   ```bash
+   npm install
+   npm start
+   ```
+   The frontend will be accessible in your browser and automatically connect to the backend engine.
 
----
-
-## 🚀 Getting Started
-
-```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Build for production
-npm run build
-```
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-| Shortcut | Action             |
-|----------|--------------------|
-| `⌘K`    | Open command palette |
-| `⌘B`    | Toggle sidebar       |
-| `⌘R`    | Refresh data         |
-| `Esc`   | Close overlay        |
-| `↑↓`    | Navigate command palette |
-| `↵`     | Execute command      |
-
----
-
-## 🎨 Design System
-
-### Colors
-| Token | Value | Use |
-|-------|-------|-----|
-| `--color-abyss` | `#080B12` | Page background |
-| `--color-void` | `#0D1117` | Panels, sidebar |
-| `--color-surface` | `#161B22` | Cards, inputs |
-| `--color-cyan` | `#00D4FF` | Primary accent |
-| `--color-green` | `#3FB950` | Success states |
-| `--color-red` | `#F85149` | Error states |
-| `--color-amber` | `#D29922` | Warning states |
-
-### Typography
-- **Headings / Labels / Values**: JetBrains Mono
-- **Body**: Inter
-- **Scale**: 10px → 11px → 13px → 14px → 18px → 24px → 32px
-
-### Motion
-- Instant interactions: `60ms`
-- Hover transitions: `100ms`
-- Drawer slide: `220ms ease-out`
-- Live data: instant swap (no animation)
-
----
-
-## 🔧 Tech Stack
-
-- **React 18** — UI framework
-- **Vite** — Build tool
-- **Recharts** — Area & bar charts
-- **Lucide React** — Icon system
-- **CSS Custom Properties** — Design tokens
-
----
-
-## 📦 Features
-
-- ✅ Live metric cards (CPU, Memory, RPS, Error Rate) updating every 2s
-- ✅ Real-time area chart with tab switching (CPU / Memory / RPS)
-- ✅ 7-day request volume bar chart
-- ✅ Live log stream with auto-generated entries and level filtering
-- ✅ Alerts panel with severity filtering and acknowledge actions
-- ✅ Sortable service overview table
-- ✅ Slide-in detail drawer for any clickable element
-- ✅ `⌘K` command palette with keyboard navigation
-- ✅ Notification toast stack
-- ✅ Collapsible sidebar (240px ↔ 56px icon mode)
-- ✅ Top loading progress bar
-- ✅ Sparkline mini-charts
-- ✅ All hover effects, glows, and micro-animations
-- ✅ Full keyboard shortcut system
+3. **Build for production:**
+   To create an optimized production build of the frontend:
+   ```bash
+   npm run build
+   ```
