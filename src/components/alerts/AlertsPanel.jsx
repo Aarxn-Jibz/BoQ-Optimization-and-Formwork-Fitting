@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { COLORS } from "../../constants/tokens";
-import { INITIAL_ALERTS, ALERT_FILTERS } from "../../constants/config";
-import { INVENTORY_DATA } from "../../data/constants";
+import { ALERT_FILTERS } from "../../constants/config";
 
 function AlertIcon({ status }) {
   if (status === "ok")   return <CheckCircle  size={14} color={COLORS.green} />;
@@ -46,19 +45,12 @@ function computeInventoryAlerts(inventory) {
   return alerts;
 }
 
-export default function AlertsPanel({ onAlertClick, onAcknowledge }) {
-  const [filterState, setFilterState] = useState("all");
+export default function AlertsPanel({ onAlertClick, onAcknowledge, inventoryData = [] }) {  const [filterState, setFilterState] = useState("all");
   const [acked, setAcked] = useState({});
 
   // Merge static operational alerts + live computed inventory alerts
-  const inventoryAlerts = computeInventoryAlerts(INVENTORY_DATA);
-  const allAlerts = [
-    ...INITIAL_ALERTS.filter(a =>
-      // Remove the hardcoded Inventory Overrun — it's now computed from real data
-      a.title !== "Inventory Overrun"
-    ),
-    ...inventoryAlerts,
-  ].map(a => ({ ...a, ack: acked[a.id] ?? a.ack }));
+  const inventoryAlerts = computeInventoryAlerts(inventoryData);
+const allAlerts = inventoryAlerts.map(a => ({ ...a, ack: acked[a.id] ?? a.ack }));
 
   const filtered = filterState === "all"
     ? allAlerts

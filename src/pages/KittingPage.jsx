@@ -167,7 +167,13 @@ function BoQRow({ row, idx }) {
       <td style={{ fontSize:13,color:C.text,padding:"0 16px" }}>{row.desc}</td>
       <td style={{ ...mono,fontSize:12,color:C.muted,padding:"0 16px" }}>{row.unit}</td>
       <td style={{ ...mono,fontSize:14,fontWeight:700,color:C.cyan,padding:"0 16px" }}>{row.qty}</td>
-      <td style={{ fontSize:12,color:C.muted,padding:"0 16px",maxWidth:280 }}>{row.remark}</td>
+      <td style={{ fontSize:12,color:C.muted,padding:"0 16px",maxWidth:220 }}
+  title={row.remarkFull}>
+  {row.remarkShort}
+  <span style={{ ...mono,fontSize:9,color:"rgba(0,212,255,0.5)",marginLeft:6 }}>
+    ⓘ
+  </span>
+</td>
     </tr>
   );
 }
@@ -176,9 +182,10 @@ function BoQRow({ row, idx }) {
 function BoQTable({ kits, summary }) {
   const [copied, setCopied] = useState(false);
   const rows = kits.map((k, i) => ({
-    no: i+1, desc:`Formwork Kit ${k.dimensions}m`, unit:"Set", qty:k.required_qty,
-    remark:`×${k.repetition_count} reuse · ${k.used_in_elements.join(", ")}`,
-  }));
+  no: i+1, desc:`Formwork Kit ${k.dimensions}m`, unit:"Set", qty:k.required_qty,
+  remarkShort: `×${k.repetition_count} reuse · ${k.used_in_elements.length} elements`,
+  remarkFull:  k.used_in_elements.join(", "),
+}));
   const copyCSV = () => {
     const header = "Item,Description,Unit,Qty,Remark\n";
     const body = rows.map(r => `${r.no},"${r.desc}",${r.unit},${r.qty},"${r.remark}"`).join("\n");

@@ -155,7 +155,7 @@ function InnerApp() {
         );
 
       case "alerts":
-        return <AlertsPage onAlertClick={openAlertDrawer} push={push} />;
+  return <AlertsPage onAlertClick={openAlertDrawer} push={push} inventoryData={inventoryData} />;
 
       case "history":
         return (

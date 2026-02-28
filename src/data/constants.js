@@ -2,11 +2,11 @@
 
 export const NAV_ITEMS = [
   { id:'overview',   label:'Overview',     icon:'LayoutDashboard' },
-  { id:'input',      label:'Input / BoQ',  icon:'ClipboardList'   },
+  { id:'input',      label:'Input',  icon:'ClipboardList'   },
   { id:'kitting',    label:'Kitting Plan', icon:'Layers'          },
   { id:'inventory',  label:'Inventory',    icon:'Package'         },
   { id:'alerts',     label:'Alerts',       icon:'AlertTriangle'   },
-  { id:'history',    label:'Run History',  icon:'History'         },
+  { id:'history',    label:'History',  icon:'History'         },
   { id:'settings',   label:'Settings',     icon:'Settings'        },
 ]
 
@@ -46,13 +46,7 @@ export const MOCK_OPTIMIZATION_RESULT = {
   _processed_at:'2026-03-01T09:30:00Z',
 }
 
-export const INITIAL_ALERTS = [
-  { id:1, status:'warn', title:'BoQ Deviation +12%',       sub:'Slab-B1 quantity mismatch',       time:'15m ago', ack:false },
-  { id:2, status:'ok',   title:'KIT-001 Cycle Complete',   sub:'Column-A1 stripped successfully', time:'1h ago',  ack:true  },
-  { id:3, status:'warn', title:'Low Repetition Rate',      sub:'Foundation elements < 2 reuses',  time:'2h ago',  ack:false },
-  { id:4, status:'ok',   title:'Optimization Run Success', sub:'RUN-2026-001 completed',          time:'3h ago',  ack:true  },
-  { id:5, status:'err',  title:'Schedule Conflict',        sub:'KIT-003 overlap on 2026-03-05',   time:'4h ago',  ack:false },
-]
+export const INITIAL_ALERTS = []
 
 export const RUN_HISTORY = [
   { id:'RUN-2026-005', date:'2026-03-01', elements:8,  qty:120, saving:'68.9%', status:'completed', kits:14, exec:'0.842 ms' },

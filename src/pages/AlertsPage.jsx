@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { INITIAL_ALERTS } from "../data/constants";
 
 const C = { cyan:"#00D4FF",green:"#3FB950",red:"#F85149",amber:"#D29922",
   void:"#0D1117",surface:"#161B22",border:"#21262D",text:"#E6EDF3",muted:"#7D8590" };
@@ -39,8 +38,27 @@ function AlertRow({ alert, onAlertClick, onAck, colors, icons }) {
   );
 }
 
-export default function AlertsPage({ onAlertClick, push }) {
-  const [alerts, setAlerts] = useState(INITIAL_ALERTS);
+export default function AlertsPage({ onAlertClick, push, inventoryData = [] }) {
+  const [alerts, setAlerts] = useState([]);
+  // Compute real alerts from live inventory
+  React.useEffect(() => {
+    const computed = [];
+    inventoryData.forEach(item => {
+      if (item.utilization >= 100)
+        computed.push({ id:`crit-${item.kit_id}`, status:"err",
+          title:`Inventory Overrun: ${item.kit_id}`,
+          sub:`${item.type} — fully deployed, none available`, time:"live", ack:false });
+      else if (item.utilization >= 80)
+        computed.push({ id:`warn-${item.kit_id}`, status:"warn",
+          title:`High Utilization: ${item.kit_id}`,
+          sub:`${item.type} — ${item.utilization}% deployed`, time:"live", ack:false });
+      else if (item.utilization === 0)
+        computed.push({ id:`idle-${item.kit_id}`, status:"warn",
+          title:`Idle Kit: ${item.kit_id}`,
+          sub:`${item.type} — 0% utilization, may be overstocked`, time:"live", ack:false });
+    });
+    setAlerts(computed);
+  }, [inventoryData]);
   const [filter, setFilter] = useState("all");
 
   const ack = (id) => {

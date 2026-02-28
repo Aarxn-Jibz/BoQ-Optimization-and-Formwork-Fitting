@@ -171,9 +171,10 @@ export default function OverviewPage({
       <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 14 }}>
         <VolumeChart optimizationResult={optimizationResult}/>
         <AlertsPanel
-          onAlertClick={onAlertClick}
-          onAcknowledge={() => push?.({ title: "All Clear", msg: "Alerts acknowledged" }, "ok")}
-        />
+  inventoryData={inventoryData}
+  onAlertClick={onAlertClick}
+  onAcknowledge={() => push?.({ title: "All Clear", msg: "Alerts acknowledged" }, "ok")}
+/>
       </div>
 
       <ServicesTable
