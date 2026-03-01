@@ -12,7 +12,7 @@ import os
 from datetime import datetime, timedelta
 
 class BoQDataPipeline:
-    def __init__(self, num_rows=1000, base_date="2026-03-01"):
+    def __init__(self, num_rows=50000, base_date="2026-03-01"):
         self.num_rows = num_rows
         self.base_date = datetime.strptime(base_date, "%Y-%m-%d")
         self.raw_file = 'BoQ_Dataset_Raw.csv'
@@ -129,7 +129,7 @@ class BoQDataPipeline:
         print("="*40 + "\n")
 
 if __name__ == "__main__":
-    # Generate a massive 10,000 row dataset to show off Go's speed later!
-    pipeline = BoQDataPipeline(num_rows=10000)
+    # Generate a massive 50,000 row dataset to show off Go's speed later!
+    pipeline = BoQDataPipeline(num_rows=50000)
     pipeline.generate_raw_data()
     pipeline.clean_and_transform()
