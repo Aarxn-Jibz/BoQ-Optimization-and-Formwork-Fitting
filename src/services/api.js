@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────
 
 const MOCK_MODE = false          // ← true = use mock data, false = call Go
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const BASE = process.env.REACT_APP_API_URL || 'https://boq-optimization-and-formwork-fitting-production.up.railway.app'
 const TIMEOUT = 30000
 
 const ENDPOINTS = {
