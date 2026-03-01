@@ -14,7 +14,7 @@ const mono = "'JetBrains Mono', monospace";
 // ── Compute priority bullets from LIVE inventory state ────────
 function getPriorities(inventoryData) {
   if (!inventoryData || inventoryData.length === 0) {
-    return [{ level: "info", text: "No optimization run yet — upload a BoQ and run optimization to see live data" }];
+    return [];
   }
   const out = [];
   inventoryData.forEach(item => {
@@ -42,7 +42,7 @@ function TodayCard({ onGoToInput, inventoryData }) {
     <div style={{
       background: C.void,
       border: `1px solid ${isNew ? "rgba(0,212,255,0.2)" : hasIssues ? "rgba(248,81,73,0.25)" : "rgba(63,185,80,0.2)"}`,
-      position: "relative", overflow: "hidden",
+      position: "relative", overflow: "hidden", flexShrink: 0,
     }}>
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 2,

@@ -1,31 +1,31 @@
 import React, { useCallback, useState, useEffect } from "react";
 import "./index.css";
 import { AppProvider, useApp, ACTIONS } from "./context/AppContext";
-import { useNotifications }  from "./hooks/useNotifications";
-import { useLiveMetrics }    from "./hooks/useLiveMetrics";
-import { useKeyboard }       from "./hooks/useKeyboard";
-import Topbar                from "./components/layout/Topbar";
-import Sidebar               from "./components/layout/Sidebar";
-import Drawer                from "./components/ui/Drawer";
-import CommandPalette        from "./components/ui/CommandPalette";
-import NotificationStack     from "./components/ui/NotificationStack";
+import { useNotifications } from "./hooks/useNotifications";
+import { useLiveMetrics } from "./hooks/useLiveMetrics";
+import { useKeyboard } from "./hooks/useKeyboard";
+import Topbar from "./components/layout/Topbar";
+import Sidebar from "./components/layout/Sidebar";
+import Drawer from "./components/ui/Drawer";
+import CommandPalette from "./components/ui/CommandPalette";
+import NotificationStack from "./components/ui/NotificationStack";
 
-import OverviewPage   from "./pages/OverviewPage";
-import InputPage      from "./pages/InputPage";
-import KittingPage    from "./pages/KittingPage";
-import InventoryPage  from "./pages/InventoryPage";
-import AlertsPage     from "./pages/AlertsPage";
-import HistoryPage    from "./pages/HistoryPage";
-import SettingsPage   from "./pages/SettingsPage";
+import OverviewPage from "./pages/OverviewPage";
+import InputPage from "./pages/InputPage";
+import KittingPage from "./pages/KittingPage";
+import InventoryPage from "./pages/InventoryPage";
+import AlertsPage from "./pages/AlertsPage";
+import HistoryPage from "./pages/HistoryPage";
+import SettingsPage from "./pages/SettingsPage";
 
 const PAGE_TITLES = {
-  overview:  "Dashboard",
-  input:     "Input / BoQ",
-  kitting:   "Kitting Plan",
+  overview: "Dashboard",
+  input: "Input / BoQ",
+  kitting: "Kitting Plan",
   inventory: "Inventory",
-  alerts:    "Alerts",
-  history:   "Run History",
-  settings:  "Settings",
+  alerts: "Alerts",
+  history: "Run History",
+  settings: "Settings",
 };
 
 // ── Derive live inventory from optimization kit_details ────────
@@ -34,13 +34,13 @@ const PAGE_TITLES = {
 function deriveInventory(result) {
   if (!result?.kit_details?.length) return [];
   return result.kit_details.map((kit, i) => {
-    const total     = kit.required_qty;
-    const deployed  = Math.ceil(total * 0.65);        // ~65% deployed
+    const total = kit.required_qty;
+    const deployed = Math.ceil(total * 0.65);        // ~65% deployed
     const available = total - deployed;
     const utilization = Math.round((deployed / total) * 100);
     return {
-      kit_id:      `KIT-${String(i + 1).padStart(3, "0")}`,
-      type:        kit.material
+      kit_id: `KIT-${String(i + 1).padStart(3, "0")}`,
+      type: kit.material
         ? `${kit.material} ${kit.dimensions}`
         : kit.dimensions,
       total,
@@ -48,7 +48,7 @@ function deriveInventory(result) {
       available,
       utilization,
       repetition_count: kit.repetition_count,
-      elements:    kit.used_in_elements ?? [],
+      elements: kit.used_in_elements ?? [],
     };
   });
 }
@@ -59,7 +59,7 @@ function InnerApp() {
 
   // ── Global state ──────────────────────────────────────────
   const [optimizationResult, setOptimizationResult] = useState(null);
-  const [inventoryData,      setInventoryData]      = useState([]);   // empty until run
+  const [inventoryData, setInventoryData] = useState([]);   // empty until run
   const [runHistory, setRunHistory] = useState([]);
   // Listen for nav events fired by child components
   useEffect(() => {
@@ -69,7 +69,8 @@ function InnerApp() {
   }, [dispatch]);
 
   const onNewLog = useCallback((log) => {
-    if (log.level === "ERROR") push({ title: "Yard Alert", msg: log.msg }, "err");
+    // Disabled Yard Alert pushes per request
+    // if (log.level === "ERROR") push({ title: "Yard Alert", msg: log.msg }, "err");
   }, [push]);
 
   const { metrics, cpuChart, sparkCpu, refresh } = useLiveMetrics(onNewLog);
@@ -77,9 +78,9 @@ function InnerApp() {
   useKeyboard({
     "k+any": openCmd,
     "b+any": toggleSidebar,
-    "1+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "overview"  }),
-    "2+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "input"     }),
-    "3+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "kitting"   }),
+    "1+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "overview" }),
+    "2+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "input" }),
+    "3+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "kitting" }),
     "4+any": () => dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "inventory" }),
   });
 
@@ -93,42 +94,42 @@ function InnerApp() {
   }
 
   // Drawer openers
-  const openAlertDrawer     = (alert)   => openDrawer({ type: "alert",     alert     });
-  const openServiceDrawer   = (service) => openDrawer({ type: "service",   service   });
-  const openKitDrawer       = (kit)     => openDrawer({ type: "kit",       kit       });
-  const openInventoryDrawer = (item)    => openDrawer({ type: "inventory", item      });
-  const openHistoryDrawer   = (run)     => openDrawer({ type: "history",   run       });
+  const openAlertDrawer = (alert) => openDrawer({ type: "alert", alert });
+  const openServiceDrawer = (service) => openDrawer({ type: "service", service });
+  const openKitDrawer = (kit) => openDrawer({ type: "kit", kit });
+  const openInventoryDrawer = (item) => openDrawer({ type: "inventory", item });
+  const openHistoryDrawer = (run) => openDrawer({ type: "history", run });
 
   const handleDrawerAction = (action, payload) => {
-    if (action === "alert-set") push({ title: "Alert Set",    msg: `Threshold for ${payload}` }, "ok");
-    if (action === "ack")       push({ title: "Acknowledged", msg: payload?.title              }, "ok");
-    if (action === "escalate")  push({ title: "Escalated",    msg: "Sent to site engineer"     }, "warn");
-    if (action === "rerun")     push({ title: "Re-running",   msg: payload?.id                 }, "info");
+    if (action === "alert-set") push({ title: "Alert Set", msg: `Threshold for ${payload}` }, "ok");
+    if (action === "ack") push({ title: "Acknowledged", msg: payload?.title }, "ok");
+    if (action === "escalate") push({ title: "Escalated", msg: "Sent to site engineer" }, "warn");
+    if (action === "rerun") push({ title: "Re-running", msg: payload?.id }, "info");
   };
 
   // ── Called when optimization completes ───────────────────
   const handleOptimizationComplete = useCallback((result) => {
-  setOptimizationResult(result);
-  const derived = deriveInventory(result);
-  setInventoryData(derived);
+    setOptimizationResult(result);
+    const derived = deriveInventory(result);
+    setInventoryData(derived);
 
-  // Save to history
-  setRunHistory(prev => [{
-    id:       `RUN-${Date.now()}`,
-    date:     new Date().toLocaleString(),
-    elements: result.kit_details?.length ?? 0,
-    qty:      result.original_boq_items,
-    kits:     result.optimized_kits_required,
-    saving:   `${result.estimated_cost_savings_percent.toFixed(1)}%`,
-    status:   "completed",
-  }, ...prev]);
+    // Save to history
+    setRunHistory(prev => [{
+      id: `RUN-${Date.now()}`,
+      date: new Date().toLocaleString(),
+      elements: result.kit_details?.length ?? 0,
+      qty: result.original_boq_items,
+      kits: result.optimized_kits_required,
+      saving: `${result.estimated_cost_savings_percent.toFixed(1)}%`,
+      status: "completed",
+    }, ...prev]);
 
-  dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "kitting" });
-  push({
-    title: "Optimization Complete",
-    msg:   `${result.estimated_cost_savings_percent.toFixed(1)}% savings · ${result.optimized_kits_required} kits`,
-  }, "ok");
-}, [dispatch, push]);
+    dispatch({ type: ACTIONS.SET_ACTIVE_NAV, payload: "kitting" });
+    push({
+      title: "Optimization Complete",
+      msg: `${result.estimated_cost_savings_percent.toFixed(1)}% savings · ${result.optimized_kits_required} kits`,
+    }, "ok");
+  }, [dispatch, push]);
 
   const renderPage = () => {
     switch (state.activeNav) {
@@ -155,17 +156,17 @@ function InnerApp() {
         );
 
       case "alerts":
-  return <AlertsPage onAlertClick={openAlertDrawer} push={push} inventoryData={inventoryData} />;
+        return <AlertsPage onAlertClick={openAlertDrawer} push={push} inventoryData={inventoryData} />;
 
       case "history":
         return (
-    <HistoryPage
-      history={runHistory}
-      onRunClick={openHistoryDrawer}
-      onRerun={run => { push({ title: "Loading Run", msg: run.id }, "info"); openHistoryDrawer(run); }}
-      push={push}
-    />
-  );
+          <HistoryPage
+            history={runHistory}
+            onRunClick={openHistoryDrawer}
+            onRerun={run => { push({ title: "Loading Run", msg: run.id }, "info"); openHistoryDrawer(run); }}
+            push={push}
+          />
+        );
 
       case "settings":
         return <SettingsPage push={push} />;
