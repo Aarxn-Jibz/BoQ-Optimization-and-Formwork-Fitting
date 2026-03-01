@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"html/template"
 	"math"
+	"net/smtp"
 	"os"
 	"sort"
 	"sync"
@@ -28,6 +31,15 @@ type BoQItem struct {
 
 type OptimizationRequest struct {
 	Items []BoQItem `json:"items"`
+}
+
+type EmailExportRequest struct {
+	SenderEmail    string      `json:"sender_email"`
+	SenderPassword string      `json:"sender_password"`
+	ToAddress      string      `json:"to_address"`
+	Subject        string      `json:"subject"`
+	Message        string      `json:"message"`
+	PlanData       []KitDetail `json:"plan_data"`
 }
 
 type KitDetail struct {
@@ -217,6 +229,85 @@ func main() {
 		return c.JSON(result)
 	})
 
+	// ── Email Export Endpoint ──────────────────────────────────────
+	app.Post("/api/export/email", func(c *fiber.Ctx) error {
+		var req EmailExportRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Cannot parse JSON. Check your payload format.",
+			})
+		}
+
+		if req.SenderEmail == "" || req.SenderPassword == "" || req.ToAddress == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Missing required email credentials or destination.",
+			})
+		}
+
+		smtpHost := "smtp.gmail.com"
+		smtpPort := "587"
+
+		auth := smtp.PlainAuth("", req.SenderEmail, req.SenderPassword, smtpHost)
+
+		var body bytes.Buffer
+		body.WriteString(fmt.Sprintf("To: %s\r\n", req.ToAddress))
+		body.WriteString(fmt.Sprintf("Subject: %s\r\n", req.Subject))
+		body.WriteString("MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\r\n\r\n")
+
+		htmlString := `
+		<html>
+			<head>
+				<style>
+					body { font-family: monospace, sans-serif; color: #333; }
+					table { width: 100%; border-collapse:collapse; margin-top:20px; text-align: left; }
+					th, td { border: 1px solid #ddd; padding: 10px; }
+					th { background-color: #f2f2f2; }
+				</style>
+			</head>
+			<body>
+				<h2>Kit-Optima Kitting Plan</h2>
+				<p><b>Message:</b> {{.Message}}</p>
+				<table>
+					<thead>
+						<tr>
+							<th>Type</th>
+							<th>Dimensions</th>
+							<th>Min. Required Qty</th>
+							<th>Avg. Repetition</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{range .PlanData}}
+						<tr>
+							<td>{{.Material}}</td>
+							<td>{{.Dimensions}}</td>
+							<td>{{.RequiredQty}}</td>
+							<td>{{.RepetitionCount}}</td>
+						</tr>
+						{{end}}
+					</tbody>
+				</table>
+			</body>
+		</html>`
+
+		tmpl, err := template.New("email").Parse(htmlString)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse email template."})
+		}
+
+		if err := tmpl.Execute(&body, req); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate email content."})
+		}
+
+		if err := smtp.SendMail(smtpHost+":"+smtpPort, auth, req.SenderEmail, []string{req.ToAddress}, body.Bytes()); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to send email. Check your SMTP App Password. Error: " + err.Error(),
+			})
+		}
+
+		return c.JSON(fiber.Map{"status": "success", "message": "Email sent successfully!"})
+	})
+
 	// Get the port assigned by Railway, or use 3000 for local development
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -228,7 +319,7 @@ func main() {
 	fmt.Println("║  POST /api/optimize-kitting              ║")
 	fmt.Println("║  GET  /api/health                        ║")
 	fmt.Println("╚══════════════════════════════════════════╝")
-	
+
 	// Listen on the dynamic port
 	app.Listen(":" + port)
 }

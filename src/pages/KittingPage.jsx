@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import EmailRequirementsModal from "../components/ui/EmailRequirementsModal";
 
 const C = {
   cyan: "#00D4FF", green: "#3FB950", red: "#F85149", amber: "#D29922",
@@ -446,6 +447,7 @@ function ESGFullReport({ result, push }) {
 // ─── Main KittingPage ─────────────────────────────────────────
 export default function KittingPage({ result, onKitClick, onGoToInput, push }) {
   const [activeTab, setActiveTab] = useState("kits");
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   if (!result) {
     return (
@@ -514,6 +516,16 @@ export default function KittingPage({ result, onKitClick, onGoToInput, push }) {
             {label}
           </div>
         ))}
+        <button onClick={() => setIsEmailModalOpen(true)}
+          style={{
+            marginLeft: "auto", display: "flex", alignItems: "center", gap: 6,
+            background: "none", border: "none", color: C.cyan,
+            fontFamily: "'JetBrains Mono',monospace", fontSize: 10, fontWeight: 700,
+            cursor: "pointer", padding: "0 16px", textTransform: "uppercase",
+            letterSpacing: "0.06em", transition: "color 150ms"
+          }}>
+          ✉ SEND EMAIL
+        </button>
       </div>
 
       {activeTab === "kits" && (
@@ -545,6 +557,14 @@ export default function KittingPage({ result, onKitClick, onGoToInput, push }) {
           </pre>
         </div>
       )}
+
+      <EmailRequirementsModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        kitDetails={S.kit_details}
+        push={push}
+        runId={S._run_id}
+      />
     </div>
   );
 }

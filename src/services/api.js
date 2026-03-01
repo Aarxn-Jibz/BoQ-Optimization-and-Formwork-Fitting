@@ -95,6 +95,14 @@ export async function checkHealth() {
   return apiFetch(ENDPOINTS.HEALTH)
 }
 
+// ── POST /api/export/email ────────────────────────────────────
+export async function sendExportEmail(payload) {
+  return apiFetch('/api/export/email', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
+}
+
 export const fetchHistory = async () => {
   const response = await fetch('/api/history');
   return response.json();
