@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"sort"
 	"sync"
 	"time"
@@ -216,10 +217,18 @@ func main() {
 		return c.JSON(result)
 	})
 
+	// Get the port assigned by Railway, or use 3000 for local development
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+
 	fmt.Println("╔══════════════════════════════════════════╗")
-	fmt.Println("║  Kit-Optima Go Engine — localhost:3000   ║")
+	fmt.Printf("║  Kit-Optima Go Engine — Port: %-10s ║\n", port)
 	fmt.Println("║  POST /api/optimize-kitting              ║")
 	fmt.Println("║  GET  /api/health                        ║")
 	fmt.Println("╚══════════════════════════════════════════╝")
-	app.Listen(":3000")
+	
+	// Listen on the dynamic port
+	app.Listen(":" + port)
 }
